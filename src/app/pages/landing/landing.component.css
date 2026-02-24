@@ -1,0 +1,16 @@
+.landing-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.hero-section {
+    background: linear-gradient(to right, var(--primary-500), var(--primary-700));
+    color: white;
+    padding: 6rem 2rem;
+}
+
+.features-section {
+    flex: 1;
+    background-color: var(--surface-ground);
+}

@@ -1,0 +1,39 @@
+<div class="register-container flex align-items-center justify-content-center min-h-screen surface-ground">
+    <p-card header="Register" [style]="{ width: '400px' }" styleClass="shadow-4">
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4">
+            <p-floatLabel>
+                <input pInputText id="fullName" formControlName="fullName" class="w-full" />
+                <label for="fullName">Full Name</label>
+            </p-floatLabel>
+
+            <p-floatLabel>
+                <input pInputText id="email" formControlName="email" class="w-full" />
+                <label for="email">Email</label>
+            </p-floatLabel>
+            
+            <p-floatLabel>
+                <p-password id="password" formControlName="password" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full"></p-password>
+                <label for="password">Password</label>
+            </p-floatLabel>
+
+             <p-floatLabel>
+                <p-password id="confirmPassword" formControlName="confirmPassword" [feedback]="false" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full"></p-password>
+                <label for="confirmPassword">Confirm Password</label>
+            </p-floatLabel>
+            <small *ngIf="registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched" class="p-error block">
+                Passwords do not match.
+            </small>
+
+            <p-button label="Create Account" icon="pi pi-user-plus" type="submit" [disabled]="registerForm.invalid" styleClass="w-full"></p-button>
+        </form>
+        <ng-template pTemplate="footer">
+             <div class="text-center mt-2">
+                <span class="text-600">Already have an account? </span>
+                <a [routerLink]="['/login']" class="font-bold text-primary no-underline cursor-pointer">Login</a>
+            </div>
+             <div class="text-center mt-2">
+                 <a [routerLink]="['/']" class="font-bold text-secondary no-underline cursor-pointer">Back to Home</a>
+            </div>
+        </ng-template>
+    </p-card>
+</div>

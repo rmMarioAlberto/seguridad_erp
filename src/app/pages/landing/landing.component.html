@@ -1,0 +1,54 @@
+
+<div class="landing-container">
+    <p-menubar [model]="items">
+        <ng-template pTemplate="start">
+            <svg width="35" height="40" viewBox="0 0 35 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-8">
+                <path d="M5 40C5 40 5 20 20 20C35 20 35 40 35 40H5Z" fill="var(--primary-color)" />
+                <path d="M5 0C5 0 5 20 20 20C35 20 35 0 35 0H5Z" fill="var(--primary-color)" />
+            </svg>
+        </ng-template>
+        <ng-template pTemplate="end">
+            <div class="flex align-items-center gap-2">
+                <p-button label="Login" icon="pi pi-user" styleClass="p-button-text" [routerLink]="['/login']"></p-button>
+                <p-button label="Register" icon="pi pi-user-plus" [routerLink]="['/register']"></p-button>
+            </div>
+        </ng-template>
+    </p-menubar>
+
+    <div class="hero-section text-center p-8">
+        <h1 class="text-5xl font-bold mb-4">Welcome to Our ERP System</h1>
+        <p class="text-xl mb-6">Manage your business with ease and efficiency.</p>
+        <p-button label="Get Started" icon="pi pi-arrow-right" size="large" [routerLink]="['/register']"></p-button>
+    </div>
+
+    <div class="features-section grid p-8">
+        <div class="col-12 md:col-4 p-2">
+            <p-card header="Analytics" subheader="Real-time data" styleClass="h-full">
+                <ng-template pTemplate="header">
+                    <img alt="Card" src="https://primefaces.org/cdn/primeng/images/usercard.png" />
+                </ng-template>
+                <p>Track your business performance with advanced analytics and reporting tools.</p>
+            </p-card>
+        </div>
+        <div class="col-12 md:col-4 p-2">
+            <p-card header="Security" subheader="Enterprise grade" styleClass="h-full">
+                <ng-template pTemplate="header">
+                    <img alt="Card" src="https://primefaces.org/cdn/primeng/images/usercard.png" />
+                </ng-template>
+                <p>Your data is safe with our top-notch security measures and protocols.</p>
+            </p-card>
+        </div>
+        <div class="col-12 md:col-4 p-2">
+            <p-card header="Integration" subheader="Seamless connection" styleClass="h-full">
+               <ng-template pTemplate="header">
+                    <img alt="Card" src="https://primefaces.org/cdn/primeng/images/usercard.png" />
+                </ng-template>
+                <p>Integrate with your favorite tools and services effortlessly.</p>
+            </p-card>
+        </div>
+    </div>
+
+    <footer class="text-center p-4 bg-gray-900 text-white">
+        <p>&copy; 2024 ERP System. All rights reserved.</p>
+    </footer>
+</div>
