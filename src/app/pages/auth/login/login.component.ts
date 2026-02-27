@@ -7,7 +7,7 @@ import { PasswordModule } from 'primeng/password';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -31,7 +31,8 @@ export class LoginComponent {
 
   constructor(
     private readonly fb: FormBuilder,
-    private messageService: MessageService,
+    private readonly messageService: MessageService,
+    private readonly router: Router,
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -48,6 +49,7 @@ export class LoginComponent {
           summary: 'Success',
           detail: 'Login successful!',
         });
+        setTimeout(() => this.router.navigate(['/home']), 1000);
       } else {
         this.messageService.add({
           severity: 'error',

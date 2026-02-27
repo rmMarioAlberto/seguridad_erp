@@ -1,42 +1,45 @@
 <p-toast></p-toast>
 <div class="register-container flex align-items-center justify-content-center min-h-screen surface-ground pb-5 pt-5">
     <p-card header="Register" [style]="{ width: '450px' }" styleClass="shadow-4">
+        <br>
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-3">
             <p-floatLabel>
                 <input pInputText id="fullName" formControlName="fullName" class="w-full" />
                 <label for="fullName">Full Name</label>
             </p-floatLabel>
             <small *ngIf="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched" class="p-error block -mt-2">Required field</small>
+            <br>
 
             <p-floatLabel>
                 <input pInputText id="username" formControlName="username" class="w-full" />
                 <label for="username">Username</label>
             </p-floatLabel>
             <small *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched" class="p-error block -mt-2">Required field</small>
-
+<br>
             <p-floatLabel>
                 <input pInputText id="email" formControlName="email" class="w-full" />
                 <label for="email">Email</label>
             </p-floatLabel>
             <small *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="p-error block -mt-2">Valid email required</small>
-
+<br>
             <p-floatLabel>
                 <input pInputText id="phone" formControlName="phone" class="w-full" />
                 <label for="phone">Phone Number</label>
             </p-floatLabel>
             <small *ngIf="registerForm.get('phone')?.hasError('required') && registerForm.get('phone')?.touched" class="p-error block -mt-2">Required field</small>
             <small *ngIf="registerForm.get('phone')?.hasError('pattern') && registerForm.get('phone')?.touched" class="p-error block -mt-2">Only numbers allowed</small>
-
+<br>
             <p-floatLabel>
                 <input pInputText id="address" formControlName="address" class="w-full" />
                 <label for="address">Address</label>
             </p-floatLabel>
             <small *ngIf="registerForm.get('address')?.invalid && registerForm.get('address')?.touched" class="p-error block -mt-2">Required field</small>
-
+<br>
             <p-floatLabel>
                 <p-datepicker formControlName="dob" inputId="dob" styleClass="w-full" [showIcon]="true"></p-datepicker>
                 <label for="dob">Date of Birth</label>
             </p-floatLabel>
+            <br>
             <small *ngIf="registerForm.get('dob')?.hasError('required') && registerForm.get('dob')?.touched" class="p-error block -mt-2">Required field</small>
             <small *ngIf="registerForm.get('dob')?.hasError('underage') && registerForm.get('dob')?.touched" class="p-error block -mt-2">Must be at least 18 years old</small>
             
@@ -46,15 +49,16 @@
             </p-floatLabel>
             <small *ngIf="registerForm.get('password')?.hasError('required') && registerForm.get('password')?.touched" class="p-error block -mt-2">Required field</small>
             <small *ngIf="registerForm.get('password')?.hasError('strongPassword') && registerForm.get('password')?.touched" class="p-error block -mt-2">Must be 10+ chars with 1 special symbol</small>
-
+<br>
              <p-floatLabel>
                 <p-password id="confirmPassword" formControlName="confirmPassword" [feedback]="false" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full"></p-password>
                 <label for="confirmPassword">Confirm Password</label>
             </p-floatLabel>
+            <br>
             <small *ngIf="registerForm.hasError('mismatch') && registerForm.get('confirmPassword')?.touched" class="p-error block -mt-2">
                 Passwords do not match.
             </small>
-
+<br>
             <p-button label="Create Account" icon="pi pi-user-plus" type="submit" [disabled]="registerForm.invalid" styleClass="w-full"></p-button>
         </form>
         <ng-template pTemplate="footer">
