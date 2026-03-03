@@ -5,6 +5,9 @@ import { RegisterComponent } from './pages/auth/register/register.component';
 import { MainLayout } from './layouts/main-layout/main-layout';
 import { Home } from './pages/home/home';
 
+import { GroupComponent } from './pages/group/group';
+import { UserComponent } from './pages/user/user';
+
 export const routes: Routes = [
   //
   { path: '', component: LandingComponent },
@@ -16,7 +19,11 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayout,
-    children: [{ path: 'home', component: Home }],
+    children: [
+      { path: 'home', component: Home },
+      { path: 'group', component: GroupComponent },
+      { path: 'user', component: UserComponent },
+    ],
   },
   // wildcard
   { path: '**', redirectTo: '' },

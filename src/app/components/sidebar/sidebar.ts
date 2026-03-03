@@ -14,7 +14,7 @@ export class Sidebar implements OnInit {
   ngOnInit() {
     this.items = [
       {
-        label: 'Menú ERP',
+        label: 'Menú',
         items: [
           {
             label: 'Inicio',
@@ -22,20 +22,14 @@ export class Sidebar implements OnInit {
             routerLink: '/home',
           },
           {
-            label: 'Ventas',
-            icon: 'pi pi-shopping-cart',
-          },
-          {
-            label: 'Inventario',
-            icon: 'pi pi-box',
-          },
-          {
-            label: 'Clientes',
+            label: 'Group',
             icon: 'pi pi-users',
+            routerLink: '/group',
           },
           {
-            label: 'Configuración',
-            icon: 'pi pi-cog',
+            label: 'User',
+            icon: 'pi pi-user',
+            routerLink: '/user',
           },
           {
             label: 'Cerrar Sesión',
