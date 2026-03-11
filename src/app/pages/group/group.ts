@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Group } from '../../models/group.model';
 import { GroupService } from '../../services/group.service';
+import { TicketService } from '../../services/ticket.service';
+import { AuthPermissionService } from '../../services/auth-permission.service';
 
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
@@ -56,12 +59,34 @@ export class GroupComponent implements OnInit {
 
   constructor(
     private readonly groupService: GroupService,
+    private readonly ticketService: TicketService,
     private readonly messageService: MessageService,
-    private readonly confirmationService: ConfirmationService
+    private readonly confirmationService: ConfirmationService,
+    private readonly authService: AuthPermissionService,
+    private readonly router: Router
   ) {}
 
+  canAddGroup() {
+    return this.authService.hasPermission('group:add');
+  }
+
+  canEditGroup() {
+    return this.authService.hasPermission('group:edit');
+  }
+
+  canDeleteGroup() {
+    return this.authService.hasPermission('group:delete');
+  }
+
   ngOnInit() {
-    this.groupService.getGroups().subscribe((data) => (this.groups = data));
+    this.groupService.getGroups().subscribe((data) => {
+      const user = this.authService.currentUser();
+      if (user && user.role !== 'SuperAdmin') {
+        this.groups = data.filter(g => user.groups.includes(g.nombre));
+      } else {
+        this.groups = data;
+      }
+    });
   }
 
   openNew() {
@@ -127,6 +152,14 @@ export class GroupComponent implements OnInit {
     }
   }
 
+  viewGroupDashboard(group: Group) {
+    this.router.navigate(['/tickets/group'], { queryParams: { group: group.nombre } });
+  }
+
+  getTicketCount(groupName: string): number {
+    return this.ticketService.tickets().filter(t => t.grupo === groupName).length;
+  }
+
   getSeverity(nivel: string) {
     switch (nivel) {
       case 'Alta':
@@ -138,6 +171,13 @@ export class GroupComponent implements OnInit {
       default:
         return 'info';
     }
+  }
+
+  canViewGroup(group: Group): boolean {
+    const user = this.authService.currentUser();
+    if (!user) return false;
+    if (user.role === 'SuperAdmin') return true;
+    return user.groups.includes(group.nombre);
   }
 }
 

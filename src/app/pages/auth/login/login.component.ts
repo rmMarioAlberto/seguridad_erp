@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -8,6 +8,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { RouterLink, Router } from '@angular/router';
+import { AuthPermissionService } from '../../../services/auth-permission.service';
 
 @Component({
   selector: 'app-login',
@@ -28,12 +29,12 @@ import { RouterLink, Router } from '@angular/router';
 })
 export class LoginComponent {
   loginForm: FormGroup;
+  private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthPermissionService);
 
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly messageService: MessageService,
-    private readonly router: Router,
-  ) {
+  constructor() {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]],
@@ -43,18 +44,20 @@ export class LoginComponent {
   onSubmit() {
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
-      if (email === 'admin@admin.com' && password === 'Admin123!') {
+      const success = this.authService.login(email, password);
+
+      if (success) {
         this.messageService.add({
           severity: 'success',
-          summary: 'Success',
-          detail: 'Login successful!',
+          summary: 'Éxito',
+          detail: '¡Inicio de sesión correcto! Bienvenido.',
         });
         setTimeout(() => this.router.navigate(['/home']), 1000);
       } else {
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Invalid credentials. Try admin@admin.com / Admin123!',
+          summary: 'Error de acceso',
+          detail: 'Credenciales inválidas. Usa tu correo y la contraseña genérica "1".',
         });
       }
     }

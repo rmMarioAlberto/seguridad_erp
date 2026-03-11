@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
@@ -8,6 +8,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Router } from '@angular/router';
+import { AuthPermissionService } from '../../services/auth-permission.service';
 
 @Component({
   selector: 'app-user',
@@ -26,26 +27,42 @@ import { Router } from '@angular/router';
   styleUrl: './user.css',
 })
 export class UserComponent implements OnInit {
-  user = {
-    fullName: 'Alberto Admin',
-    username: 'alberto_admin',
-    email: 'admin@example.com',
-    phone: '1234567890',
-    address: '123 Admin St.',
-    dob: '01/01/1990',
-    role: 'Administrator',
+  private readonly authService = inject(AuthPermissionService);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly router = inject(Router);
+
+  currentUser = this.authService.currentUser;
+  
+  user: any = {
+    fullName: '',
+    username: '',
+    email: '',
+    role: '',
+    phone: '',
+    address: '',
+    dob: ''
   };
 
   editMode: boolean = false;
   clonedUser: any = {};
 
-  constructor(
-    private readonly messageService: MessageService,
-    private readonly confirmationService: ConfirmationService,
-    private readonly router: Router
-  ) {}
-
   ngOnInit() {
+    const user = this.currentUser();
+    if (!user || !this.authService.hasPermission('profile:view')) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
+    this.user = {
+      fullName: user.fullName,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      phone: user.phone || 'No especificado',
+      address: user.address || 'No especificada',
+      dob: user.dob || 'No especificada'
+    };
     this.clonedUser = { ...this.user };
   }
 

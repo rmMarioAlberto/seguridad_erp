@@ -1,54 +1,51 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { Group } from '../models/group.model';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GroupService {
-  private groups: Group[] = [
+  private readonly _groups = signal<Group[]>([
     {
       id: 1,
-      nivel: 'Básico',
-      autor: 'Admin',
-      nombre: 'Grupo Alfa',
-      integrantes: 5,
-      tickets: 10,
-      descripcion: 'Grupo inicial de prueba',
+      nivel: 'Alta',
+      autor: 'Mario Alberto',
+      nombre: 'Frontend',
+      integrantes: 3,
+      tickets: 4,
+      descripcion: 'Desarrollo de la interfaz de usuario con Angular y PrimeNG',
     },
     {
       id: 2,
-      nivel: 'Avanzado',
-      autor: 'User1',
-      nombre: 'Grupo Beta',
-      integrantes: 8,
-      tickets: 25,
-      descripcion: 'Grupo avanzado para tareas críticas',
+      nivel: 'Media',
+      autor: 'Juan Pérez',
+      nombre: 'Backend',
+      integrantes: 2,
+      tickets: 4,
+      descripcion: 'API REST y servicios de servidor con Node.js',
     },
-  ];
+  ]);
 
-  private readonly groupsSubject = new BehaviorSubject<Group[]>(this.groups);
+  readonly groups = this._groups.asReadonly();
 
   getGroups(): Observable<Group[]> {
-    return this.groupsSubject.asObservable();
+    // Keep for potential legacy use, but components should use signals
+    return of(this._groups());
   }
 
   addGroup(group: Group): void {
-    group.id = this.groups.length > 0 ? Math.max(...this.groups.map((g) => g.id || 0)) + 1 : 1;
-    this.groups.push(group);
-    this.groupsSubject.next([...this.groups]);
+    group.id = this._groups().length > 0 ? Math.max(...this._groups().map((g) => g.id || 0)) + 1 : 1;
+    this._groups.update(g => [...g, group]);
   }
 
   updateGroup(updatedGroup: Group): void {
-    const index = this.groups.findIndex((g) => g.id === updatedGroup.id);
-    if (index !== -1) {
-      this.groups[index] = updatedGroup;
-      this.groupsSubject.next([...this.groups]);
-    }
+    this._groups.update(groups => 
+      groups.map((g) => (g.id === updatedGroup.id ? updatedGroup : g))
+    );
   }
 
   deleteGroup(id: number): void {
-    this.groups = this.groups.filter((g) => g.id !== id);
-    this.groupsSubject.next([...this.groups]);
+    this._groups.update(groups => groups.filter((g) => g.id !== id));
   }
 }
