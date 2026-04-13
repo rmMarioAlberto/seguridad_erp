@@ -1,11 +1,15 @@
- import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import express from 'express';
+
+const server = express();
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
   // Interceptor global para estandarizar respuestas
   app.useGlobalInterceptors(new TransformInterceptor());
@@ -29,7 +33,15 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.init();
+  
+  if (process.env.NODE_ENV !== 'production') {
+    await app.listen(process.env.PORT ?? 3001);
+  }
 }
+
 bootstrap();
+
+// Exportar para Vercel
+export default server;
 

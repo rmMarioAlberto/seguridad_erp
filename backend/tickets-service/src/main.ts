@@ -28,8 +28,10 @@ async function bootstrap() {
   });
 
   try {
-    await app.listen({ port: Number(config.PORT), host: '0.0.0.0' });
-    console.log(`🚀 Tickets Service listo en http://localhost:${config.PORT}`);
+    if (process.env.NODE_ENV !== 'production') {
+      await app.listen({ port: Number(config.PORT), host: '0.0.0.0' });
+      console.log(`🚀 Tickets Service listo en http://localhost:${config.PORT}`);
+    }
   } catch (err) {
     app.log.error(err);
     process.exit(1);
@@ -37,3 +39,9 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+// Exportar para Vercel
+export default async function handler(req: any, res: any) {
+  await app.ready();
+  app.server.emit('request', req, res);
+}
