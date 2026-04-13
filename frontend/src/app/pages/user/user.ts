@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
@@ -10,6 +10,8 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { Router } from '@angular/router';
 import { AuthPermissionService } from '../../services/auth-permission.service';
 import { UserManagementService } from '../../services/user-management.service';
+import { RefetchService } from '../../services/refetch.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-user',
@@ -32,6 +34,8 @@ export class UserComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly router = inject(Router);
+  private readonly refetchService = inject(RefetchService);
+  private readonly destroyRef = inject(DestroyRef);
 
   currentUser = this.authService.currentUser;
   
@@ -55,6 +59,18 @@ export class UserComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadProfileData();
+
+    // Escuchar refrescos globales
+    this.refetchService.refetch$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        console.log('[UserProfile] Refreshing due to global event');
+        this.loadProfileData();
+      });
+  }
+
+  loadProfileData() {
     const session = this.currentUser();
     if (!session || !this.authService.hasPermission('profile:view')) {
       this.router.navigate(['/home']);
@@ -65,15 +81,17 @@ export class UserComponent implements OnInit {
     this.canDelete = this.authService.hasPermission('profile:delete');
 
     // Cargar datos iniciales básicos
-    this.user = {
-      fullName: session.nombre_completo,
-      username: session.username,
-      email: session.email,
-      role: this.authService.hasPermission('users:manage') ? 'Administrador' : 'Usuario',
-      phone: 'Cargando...',
-      address: 'Cargando...',
-      dob: 'Cargando...'
-    };
+    if (!this.editMode) {
+      this.user = {
+        fullName: session.nombre_completo,
+        username: session.username,
+        email: session.email,
+        role: this.authService.hasPermission('users:manage') ? 'Administrador' : 'Usuario',
+        phone: 'Cargando...',
+        address: 'Cargando...',
+        dob: 'Cargando...'
+      };
+    }
 
     // Cargar perfil completo si tenemos ID
     if (session.id) {
@@ -88,12 +106,16 @@ export class UserComponent implements OnInit {
             address: fullUser.direccion || '',
             dob: fullUser.fecha_inicio || ''
           };
-          this.clonedUser = { ...this.user };
+          if (!this.editMode) {
+            this.clonedUser = { ...this.user };
+          }
         }
       });
     }
 
-    this.clonedUser = { ...this.user };
+    if (!this.editMode) {
+      this.clonedUser = { ...this.user };
+    }
   }
 
   toggleEdit() {

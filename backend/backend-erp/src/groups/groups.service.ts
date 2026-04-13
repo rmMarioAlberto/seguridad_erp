@@ -64,6 +64,10 @@ export class GroupsService {
         descripcion: dto.descripcion,
         creador_id: creadorId,
       },
+      include: {
+        creador: { select: { id: true, nombre_completo: true, username: true } },
+        _count: { select: { miembros: true, tickets: true } },
+      },
     });
 
     // El creador se agrega automáticamente como miembro
@@ -95,6 +99,10 @@ export class GroupsService {
     return this.prisma.grupo.update({
       where: { id },
       data: dto,
+      include: {
+        creador: { select: { id: true, nombre_completo: true, username: true } },
+        _count: { select: { miembros: true, tickets: true } },
+      },
     });
   }
 

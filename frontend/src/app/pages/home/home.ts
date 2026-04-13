@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, effect } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -14,10 +14,12 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ChartModule } from 'primeng/chart';
 import { TicketService } from '../../services/ticket.service';
 import { AuthPermissionService } from '../../services/auth-permission.service';
-import { Ticket, TicketStatus } from '../../models/ticket.model';
+import { Ticket } from '../../models/ticket.model';
 import { TicketDetailComponent } from '../tickets/modals/ticket-detail';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { RefetchService } from '../../services/refetch.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-home',
@@ -46,6 +48,8 @@ export class Home implements OnInit {
   private readonly ticketService = inject(TicketService);
   private readonly authService = inject(AuthPermissionService);
   private readonly messageService = inject(MessageService);
+  private readonly refetchService = inject(RefetchService);
+  private readonly destroyRef = inject(DestroyRef);
 
   currentUser = this.authService.currentUser;
   userGroups = this.authService.groups;
@@ -80,6 +84,15 @@ export class Home implements OnInit {
 
   ngOnInit() {
     this.refreshData();
+    this.ticketService.loadStatuses().subscribe();
+
+    // Suscribirse a refrescos globales
+    this.refetchService.refetch$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        console.log('[Home] Refreshing due to global event');
+        this.refreshData();
+      });
   }
 
   refreshData() {
@@ -192,16 +205,17 @@ export class Home implements OnInit {
 
   chartData = computed(() => {
     const all = this.ticketService.tickets();
-    const statuses = ['Abierto', 'En Progreso', 'En Revisión', 'Cerrado'];
-    const statusCounts = statuses.map(s => all.filter(t => t.estado === s).length);
+    const statuses = this.ticketService.statuses();
+    const labels = statuses.map(s => s.nombre);
+    const statusCounts = labels.map(label => all.filter(t => t.estado === label).length);
     
     return {
-      labels: statuses,
+      labels: labels,
       datasets: [
         {
           data: statusCounts,
-          backgroundColor: ['#009688', '#FFC107', '#03A9F4', '#8BC34A'],
-          hoverBackgroundColor: ['#4DB6AC', '#FFD54F', '#4FC3F7', '#AED581']
+          backgroundColor: statuses.map(s => s.color || '#9E9E9E'),
+          hoverBackgroundColor: statuses.map(s => s.color + 'CC' || '#BDBDBD')
         }
       ]
     };
@@ -256,7 +270,7 @@ export class Home implements OnInit {
     { label: 'Kanban', value: 'kanban', icon: 'pi pi-th-large' }
   ];
 
-  statuses: TicketStatus[] = ['Abierto', 'En Progreso', 'En Revisión', 'Cerrado'];
+  statuses = this.ticketService.statuses;
 
   myTicketsByStatus(status: string) {
     return this.myTickets().filter(t => t.estado === status);
@@ -357,13 +371,8 @@ export class Home implements OnInit {
     }
   }
 
-  private mapStatusToId(status: string): number {
-    switch(status) {
-      case 'Abierto': return 1;
-      case 'En Progreso': return 2;
-      case 'En Revisión': return 3;
-      case 'Cerrado': return 4;
-      default: return 1;
-    }
+  private mapStatusToId(statusName: string): number {
+    const status = this.statuses().find(s => s.nombre === statusName);
+    return status ? status.id : 1;
   }
 }

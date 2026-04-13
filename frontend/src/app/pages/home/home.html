@@ -200,16 +200,16 @@
         <i class="pi pi-user mr-2 text-primary"></i>Mis Tareas
       </h3>
       <div class="grid px-2 mb-4">
-        @for (status of statuses; track status) {
+        @for (status of statuses(); track status.id) {
           <div class="col-12 md:col-3 px-2">
             <div class="surface-section p-3 border-round-xl h-full border-1 surface-border">
               <div class="flex justify-content-between align-items-start mb-3">
                 <h3 class="font-bold text-lg m-0 text-color flex align-items-center">
-                  <i class="pi pi-circle-fill mr-2" [style.color]="getStatusColor(status)"></i>
-                  {{ status }}
+                  <i class="pi pi-circle-fill mr-2" [style.color]="getStatusColor(status.nombre)"></i>
+                  {{ status.nombre }}
                 </h3>
                 <p-tag
-                  [value]="myTicketsByStatus(status).length.toString()"
+                  [value]="myTicketsByStatus(status.nombre).length.toString()"
                   severity="secondary"
                   [rounded]="true"
                 ></p-tag>
@@ -217,11 +217,11 @@
               <div
                 class="flex flex-column gap-3 min-h-10rem p-2 border-round surface-100"
                 cdkDropList
-                [id]="'my-' + status"
-                [cdkDropListData]="myTicketsByStatus(status)"
-                (cdkDropListDropped)="onDrop($event, status)"
+                [id]="'my-' + status.nombre"
+                [cdkDropListData]="myTicketsByStatus(status.nombre)"
+                (cdkDropListDropped)="onDrop($event, status.nombre)"
               >
-                @for (ticket of myTicketsByStatus(status); track ticket.id) {
+                @for (ticket of myTicketsByStatus(status.nombre); track ticket.id) {
                   <div
                     (click)="viewTicket(ticket)"
                     cdkDrag
@@ -279,16 +279,16 @@
           <i class="pi pi-users mr-2 text-orange-500"></i>Actividad Grupal
         </h3>
         <div class="grid px-2">
-          @for (status of statuses; track status) {
+          @for (status of statuses(); track status.id) {
             <div class="col-12 md:col-3 px-2">
               <div class="surface-section p-3 border-round-xl h-full border-1 surface-border">
                 <div class="flex justify-content-between align-items-start mb-3">
                   <h3 class="font-bold text-lg m-0 text-color flex align-items-center">
-                    <i class="pi pi-circle-fill mr-2" [style.color]="getStatusColor(status)"></i>
-                    {{ status }}
+                    <i class="pi pi-circle-fill mr-2" [style.color]="getStatusColor(status.nombre)"></i>
+                    {{ status.nombre }}
                   </h3>
                   <p-tag
-                    [value]="groupTicketsByStatus(status).length.toString()"
+                    [value]="groupTicketsByStatus(status.nombre).length.toString()"
                     severity="secondary"
                     [rounded]="true"
                   ></p-tag>
@@ -296,11 +296,11 @@
                 <div
                   class="flex flex-column gap-3 min-h-10rem p-2 border-round surface-100"
                   cdkDropList
-                  [id]="'group-' + status"
-                  [cdkDropListData]="groupTicketsByStatus(status)"
-                  (cdkDropListDropped)="onDrop($event, status)"
+                  [id]="'group-' + status.nombre"
+                  [cdkDropListData]="groupTicketsByStatus(status.nombre)"
+                  (cdkDropListDropped)="onDrop($event, status.nombre)"
                 >
-                  @for (ticket of groupTicketsByStatus(status); track ticket.id) {
+                  @for (ticket of groupTicketsByStatus(status.nombre); track ticket.id) {
                     <div
                       (click)="viewTicket(ticket)"
                       cdkDrag

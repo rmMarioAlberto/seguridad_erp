@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap, switchMap, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Group, GroupMember } from '../models/group.model';
+import { RefetchService } from './refetch.service';
 
 export interface ApiResponse<T> {
   statusCode: number;
@@ -15,6 +16,7 @@ export interface ApiResponse<T> {
 })
 export class GroupService {
   private readonly http = inject(HttpClient);
+  private readonly refetchService = inject(RefetchService);
   
   private readonly _groups = signal<Group[]>([]);
   readonly groups = this._groups.asReadonly();
@@ -92,7 +94,10 @@ export class GroupService {
     return this.http.post<ApiResponse<any>>(`${environment.apiUrl}/groups/${groupId}/members`, {
       usuario_id: userId
     }).pipe(
-      tap(() => this.getGroupDetails(groupId).subscribe())
+      tap(() => {
+        this.getGroupDetails(groupId).subscribe();
+        this.refetchService.requestRefetch();
+      })
     );
   }
 
@@ -103,6 +108,7 @@ export class GroupService {
           ...current,
           [groupId]: (current[groupId] || []).filter(m => m.id !== userId)
         }));
+        this.refetchService.requestRefetch();
       })
     );
   }
@@ -117,6 +123,7 @@ export class GroupService {
           const updatedMembers = members.map(m => m.id === userId ? { ...m, permisos } : m);
           return { ...current, [groupId]: updatedMembers };
         });
+        this.refetchService.requestRefetch();
       })
     );
   }
@@ -137,14 +144,20 @@ export class GroupService {
   addGroup(groupData: any): Observable<Group> {
     return this.http.post<ApiResponse<any>>(`${environment.apiUrl}/groups`, groupData).pipe(
       map(res => this.mapGroup(res.data)),
-      tap(newGroup => this._groups.update(gs => [...gs, newGroup]))
+      tap(newGroup => {
+        this._groups.update(gs => [...gs, newGroup]);
+        this.refetchService.requestRefetch();
+      })
     );
   }
 
   updateGroup(id: number, groupData: any): Observable<Group> {
     return this.http.put<ApiResponse<any>>(`${environment.apiUrl}/groups/${id}`, groupData).pipe(
       map(res => this.mapGroup(res.data)),
-      tap(updated => this._groups.update(gs => gs.map(g => g.id === id ? updated : g)))
+      tap(updated => {
+        this._groups.update(gs => gs.map(g => g.id === id ? updated : g));
+        this.refetchService.requestRefetch();
+      })
     );
   }
 
@@ -154,6 +167,7 @@ export class GroupService {
       tap(success => {
         if (success) {
           this._groups.update(gs => gs.filter(g => g.id !== id));
+          this.refetchService.requestRefetch();
         }
       })
     );

@@ -1,17 +1,20 @@
 import { Component, inject, effect, signal } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
+import { ButtonModule } from 'primeng/button';
 import { AuthPermissionService } from '../../services/auth-permission.service';
+import { RefetchService } from '../../services/refetch.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [MenuModule],
+  imports: [MenuModule, ButtonModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
 export class Sidebar {
   private readonly authService = inject(AuthPermissionService);
+  private readonly refetchService = inject(RefetchService);
   items = signal<MenuItem[] | undefined>(undefined);
 
   constructor() {
@@ -98,5 +101,9 @@ export class Sidebar {
         items: userMenuItems,
       },
     ]);
+  }
+
+  refreshAll() {
+    this.refetchService.requestRefetch();
   }
 }

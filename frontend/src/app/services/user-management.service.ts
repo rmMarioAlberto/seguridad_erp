@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { RefetchService } from './refetch.service';
 
 export interface UserResponse {
   id: number;
@@ -31,6 +32,7 @@ export interface ApiResponse<T> {
 })
 export class UserManagementService {
   private readonly http = inject(HttpClient);
+  private readonly refetchService = inject(RefetchService);
   
   private readonly _users = signal<UserResponse[]>([]);
   readonly users = this._users.asReadonly();
@@ -57,14 +59,20 @@ export class UserManagementService {
   createUser(userData: any): Observable<UserResponse> {
     return this.http.post<ApiResponse<UserResponse>>(`${environment.apiUrl}/users`, userData).pipe(
       map(res => res.data),
-      tap(newUser => this._users.update(us => [...us, newUser]))
+      tap(newUser => {
+        this._users.update(us => [...us, newUser]);
+        this.refetchService.requestRefetch();
+      })
     );
   }
 
   updateUser(id: number, userData: any): Observable<UserResponse> {
     return this.http.patch<ApiResponse<UserResponse>>(`${environment.apiUrl}/users/${id}`, userData).pipe(
       map(res => res.data),
-      tap(updated => this._users.update(us => us.map(u => u.id === id ? updated : u)))
+      tap(updated => {
+        this._users.update(us => us.map(u => u.id === id ? updated : u));
+        this.refetchService.requestRefetch();
+      })
     );
   }
 
@@ -75,6 +83,7 @@ export class UserManagementService {
       tap(success => {
           if (success) {
             this._users.update(us => us.filter(u => u.id !== id));
+            this.refetchService.requestRefetch();
           }
       })
     );

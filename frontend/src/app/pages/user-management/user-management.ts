@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, computed } from '@angular/core';
+import { Component, inject, OnInit, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TableModule } from 'primeng/table';
@@ -16,6 +16,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { UserManagementService, UserResponse, GlobalPermission } from '../../services/user-management.service';
 import { AuthPermissionService } from '../../services/auth-permission.service';
+import { RefetchService } from '../../services/refetch.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-user-management',
@@ -47,6 +49,8 @@ export class UserManagementComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly authService = inject(AuthPermissionService);
+  private readonly refetchService = inject(RefetchService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly canCreate = computed(() => this.authService.hasPermission('users:create'));
   readonly canEdit = computed(() => this.authService.hasPermission('users:edit'));
@@ -101,6 +105,14 @@ export class UserManagementComponent implements OnInit {
     this.userService.loadPermissionsCatalog().subscribe(permissions => {
       this.availablePermissions = permissions;
     });
+
+    // Escuchar refrescos globales
+    this.refetchService.refetch$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        console.log('[UserManagement] Refreshing due to global event');
+        this.userService.loadUsers().subscribe();
+      });
   }
 
   openNew() {

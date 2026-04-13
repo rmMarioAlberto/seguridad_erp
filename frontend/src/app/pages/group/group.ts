@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -7,6 +7,8 @@ import { GroupService } from '../../services/group.service';
 import { TicketService } from '../../services/ticket.service';
 import { AuthPermissionService } from '../../services/auth-permission.service';
 import { UserManagementService } from '../../services/user-management.service';
+import { RefetchService } from '../../services/refetch.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
@@ -58,6 +60,8 @@ export class GroupComponent implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly authService = inject(AuthPermissionService);
   private readonly userService = inject(UserManagementService);
+  private readonly refetchService = inject(RefetchService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
 
   groups = this.groupService.groups;
@@ -107,6 +111,16 @@ export class GroupComponent implements OnInit {
         })));
       }
     });
+
+    // Escuchar refrescos globales
+    this.refetchService.refetch$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.groupService.loadGroups().subscribe();
+        if (this.canManageMembers()) {
+          this.userService.loadUsers().subscribe();
+        }
+      });
   }
 
   openNew() {

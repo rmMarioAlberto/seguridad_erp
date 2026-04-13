@@ -19,4 +19,4 @@ export const PERMISSIONS_MAP: Record<string, string | null> = {
   'PUT /groups/:id/users/:userId/permissions': 'groups:manage',
 };
 
-export const PUBLIC_ROUTES = ['/auth/login', '/auth/register'];
+export const PUBLIC_ROUTES = ['/auth/login', '/auth/register', '/health'];

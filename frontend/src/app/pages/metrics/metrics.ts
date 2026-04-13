@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ChartModule } from 'primeng/chart';
@@ -6,6 +6,8 @@ import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { MetricsService, Log, Metrica, StatsSummary } from '../../services/metrics.service';
 import { AuthPermissionService } from '../../services/auth-permission.service';
+import { RefetchService } from '../../services/refetch.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, catchError, of } from 'rxjs';
 
 @Component({
@@ -19,6 +21,8 @@ import { forkJoin, catchError, of } from 'rxjs';
 export class MetricsComponent implements OnInit {
   private readonly metricsService = inject(MetricsService);
   private readonly authService = inject(AuthPermissionService);
+  private readonly refetchService = inject(RefetchService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly logs = signal<Log[]>([]);
   readonly metricas = signal<Metrica[]>([]);
@@ -37,6 +41,14 @@ export class MetricsComponent implements OnInit {
 
   ngOnInit() {
     this.loadData();
+
+    // Escuchar refrescos globales
+    this.refetchService.refetch$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        console.log('[Metrics] Refreshing due to global event');
+        this.loadData();
+      });
   }
 
   loadData() {

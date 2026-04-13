@@ -209,6 +209,13 @@ export async function ticketsRoutes(app: FastifyInstance) {
         autor_id:     body.autor_id,
         fecha_final:  body.fecha_final ? new Date(body.fecha_final) : null,
       },
+      include: {
+        estado:    { select: { id: true, nombre: true, color: true } },
+        prioridad: { select: { id: true, nombre: true, orden: true } },
+        autor:     { select: { id: true, nombre_completo: true, username: true } },
+        asignado:  { select: { id: true, nombre_completo: true, username: true } },
+        grupo:     { select: { id: true, nombre: true } },
+      },
     });
 
     // Registrar en historial
@@ -264,6 +271,13 @@ export async function ticketsRoutes(app: FastifyInstance) {
         asignado_id:  body.asignado_id !== undefined ? body.asignado_id : ticket.asignado_id,
         fecha_final:  body.fecha_final ? new Date(body.fecha_final) : ticket.fecha_final,
       },
+      include: {
+        estado:    { select: { id: true, nombre: true, color: true } },
+        prioridad: { select: { id: true, nombre: true, orden: true } },
+        autor:     { select: { id: true, nombre_completo: true, username: true } },
+        asignado:  { select: { id: true, nombre_completo: true, username: true } },
+        grupo:     { select: { id: true, nombre: true } },
+      },
     });
 
     await prisma.historialTicket.create({
@@ -312,6 +326,13 @@ export async function ticketsRoutes(app: FastifyInstance) {
     const updated = await prisma.ticket.update({
       where: { id: ticketId },
       data: { estado_id: Number(estado_id) },
+      include: {
+        estado:    { select: { id: true, nombre: true, color: true } },
+        prioridad: { select: { id: true, nombre: true, orden: true } },
+        autor:     { select: { id: true, nombre_completo: true, username: true } },
+        asignado:  { select: { id: true, nombre_completo: true, username: true } },
+        grupo:     { select: { id: true, nombre: true } },
+      },
     });
 
     await prisma.historialTicket.create({

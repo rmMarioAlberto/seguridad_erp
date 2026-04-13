@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild, OnInit, computed, effect } from '@angular/core';
+import { Component, inject, signal, ViewChild, OnInit, computed, effect, DestroyRef } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { TicketService } from '../../../services/ticket.service';
 import { GroupService } from '../../../services/group.service';
@@ -12,13 +12,15 @@ import { CardModule } from 'primeng/card';
 import { FormsModule } from '@angular/forms';
 import { TicketDetailComponent } from '../modals/ticket-detail';
 import { TicketCreateComponent } from '../modals/ticket-create';
-import { Ticket, TicketStatus } from '../../../models/ticket.model';
+import { Ticket } from '../../../models/ticket.model';
 import { AuthPermissionService } from '../../../services/auth-permission.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { UserManagementService } from '../../../services/user-management.service';
+import { RefetchService } from '../../../services/refetch.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-ticket-group-view',
@@ -51,9 +53,11 @@ export class TicketGroupViewComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthPermissionService);
   private readonly userService = inject(UserManagementService);
+  private readonly refetchService = inject(RefetchService);
+  private readonly destroyRef = inject(DestroyRef);
 
   tickets = this.ticketService.tickets;
-  statuses: TicketStatus[] = ['Abierto', 'En Progreso', 'En Revisión', 'Cerrado'];
+  statuses = this.ticketService.statuses; // Dynamic statuses from service
   
   groupOptions = computed(() => {
     return [
@@ -128,6 +132,14 @@ export class TicketGroupViewComponent implements OnInit {
     }
     
     this.refreshData();
+    this.ticketService.loadStatuses().subscribe();
+
+    // Escuchar refrescos globales
+    this.refetchService.refetch$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.refreshData();
+      });
   }
 
   saveView() {
@@ -190,18 +202,18 @@ export class TicketGroupViewComponent implements OnInit {
     return this.filteredTickets().filter(t => t.estado === status);
   }
 
-  getCount(status: TicketStatus) {
+  getCount(status: string) {
     return this.filteredTickets().filter(t => t.estado === status).length;
   }
 
-  getPercentage(status: TicketStatus) {
+  getPercentage(status: string) {
     const total = this.filteredTickets().length;
     if (total === 0) return 0;
     return Math.round((this.getCount(status) / total) * 100);
   }
 
 
-  getStatusIcon(status: TicketStatus) {
+  getStatusIcon(status: string) {
     switch (status) {
       case 'Abierto': return 'pi pi-envelope';
       case 'En Progreso': return 'pi pi-sync';
@@ -329,13 +341,8 @@ export class TicketGroupViewComponent implements OnInit {
     }
   }
 
-  private mapStatusToId(status: string): number {
-    switch(status) {
-      case 'Abierto': return 1;
-      case 'En Progreso': return 2;
-      case 'En Revisión': return 3;
-      case 'Cerrado': return 4;
-      default: return 1;
-    }
+  private mapStatusToId(statusName: string): number {
+    const status = this.statuses().find(s => s.nombre === statusName);
+    return status ? status.id : 1; // Default to 1 if not found
   }
 }

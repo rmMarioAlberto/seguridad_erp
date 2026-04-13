@@ -42,7 +42,7 @@
 
   <!-- Stats Cards Row -->
   <div class="grid mb-5">
-    @for (status of statuses; track status) {
+    @for (status of statuses(); track status.id) {
       <div class="col-12 md:col-3">
         <div
           class="surface-card shadow-1 p-3 border-round-xl border-1 surface-border hover:shadow-2 transition-all transition-duration-300"
@@ -51,21 +51,21 @@
             <div>
               <span
                 class="block text-color-secondary font-medium mb-2 uppercase text-xs tracking-wider"
-                >{{ status }}</span
+                >{{ status.nombre }}</span
               >
-              <div class="text-color font-bold text-2xl">{{ getCount(status) }}</div>
+              <div class="text-color font-bold text-2xl">{{ getCount(status.nombre) }}</div>
             </div>
             <div
               class="flex align-items-center justify-content-center border-round"
               [style.width]="'2.5rem'"
               [style.height]="'2.5rem'"
-              [style.background-color]="getStatusColor(status, true)"
+              [style.background-color]="getStatusColor(status.nombre, true)"
             >
-              <i [class]="getStatusIcon(status)" [style.color]="getStatusColor(status)"></i>
+              <i [class]="getStatusIcon(status.nombre)" [style.color]="getStatusColor(status.nombre)"></i>
             </div>
           </div>
           <div class="flex align-items-center">
-            <span class="text-primary font-medium mr-2">{{ getPercentage(status) }}%</span>
+            <span class="text-primary font-medium mr-2">{{ getPercentage(status.nombre) }}%</span>
             <span class="text-color-secondary text-xs">del total mostrado</span>
           </div>
         </div>
@@ -215,29 +215,29 @@
   <!-- Kanban View -->
   @if (selectedView() === 'kanban') {
     <div class="grid p-1 fadein animation-duration-300" cdkDropListGroup>
-      @for (status of statuses; track status) {
+      @for (status of statuses(); track status.id) {
         <div class="col-12 md:col-3 px-2">
           <div class="surface-section p-3 border-round-xl h-full border-1 surface-border">
             <div class="flex justify-content-between align-items-start mb-3">
               <h3 class="font-bold text-lg m-0 text-color flex align-items-center">
-                <i class="pi pi-circle-fill mr-2" [style.color]="getStatusColor(status)"></i>
-                {{ status }}
+                <i class="pi pi-circle-fill mr-2" [style.color]="getStatusColor(status.nombre)"></i>
+                {{ status.nombre }}
               </h3>
               <p-tag
-                [value]="getTicketsByStatus(status).length.toString()"
+                [value]="getTicketsByStatus(status.nombre).length.toString()"
                 severity="secondary"
                 [rounded]="true"
               ></p-tag>
             </div>
-
+ 
             <div
               class="flex flex-column gap-3 min-h-10rem p-2 border-round surface-100"
               cdkDropList
-              [id]="'group-view-' + status"
-              [cdkDropListData]="getTicketsByStatus(status)"
-              (cdkDropListDropped)="onDrop($event, status)"
+              [id]="'group-view-' + status.nombre"
+              [cdkDropListData]="getTicketsByStatus(status.nombre)"
+              (cdkDropListDropped)="onDrop($event, status.nombre)"
             >
-              @for (ticket of getTicketsByStatus(status); track ticket.id) {
+              @for (ticket of getTicketsByStatus(status.nombre); track ticket.id) {
                 <div
                   (click)="viewTicket(ticket)"
                   cdkDrag

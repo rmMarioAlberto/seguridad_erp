@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Ticket, TicketStatus } from '../models/ticket.model';
+import { RefetchService } from './refetch.service';
 
 export interface ApiResponse<T> {
   statusCode: number;
@@ -15,18 +16,35 @@ export interface ApiResponse<T> {
 })
 export class TicketService {
   private readonly http = inject(HttpClient);
+  private readonly refetchService = inject(RefetchService);
   
   private readonly _tickets = signal<Ticket[]>([]);
   readonly tickets = this._tickets.asReadonly();
 
+  private readonly _statuses = signal<any[]>([]);
+  readonly statuses = this._statuses.asReadonly();
+
   // Mapeo de backend a frontend model
   private mapTicket(t: any): Ticket {
+    // Fallback logic for status and priority if the backend sends partial data
+    let ticketEstado = t.estado?.nombre;
+    if (!ticketEstado && t.estado_id) {
+        const matchingStatus = this._statuses().find(s => s.id === t.estado_id);
+        if (matchingStatus) ticketEstado = matchingStatus.nombre;
+    }
+
+    let ticketPrioridad = t.prioridad?.nombre;
+    if (!ticketPrioridad && t.prioridad_id) {
+        // We don't have a priorities signal yet, but we can at least avoid undefined
+        // You might want to add a _priorities signal later if needed
+    }
+
     return {
       id: t.id,
       titulo: t.titulo,
       descripcion: t.descripcion,
-      estado: t.estado?.nombre as TicketStatus,
-      prioridad: t.prioridad?.nombre,
+      estado: (ticketEstado || 'Abierto') as TicketStatus,
+      prioridad: ticketPrioridad || 'Media',
       asignadoA: t.asignado?.nombre_completo || 'Sin asignar',
       asignadoAId: t.asignado_id || undefined,
       fechaCreacion: new Date(t.creado_en),
@@ -58,6 +76,13 @@ export class TicketService {
     );
   }
 
+  loadStatuses(): Observable<any[]> {
+    return this.http.get<ApiResponse<any[]>>(`${environment.apiUrl}/estados`).pipe(
+      map(res => res.data),
+      tap(statuses => this._statuses.set(statuses))
+    );
+  }
+
   getTicketsByStatus(status: TicketStatus, groupName: string | null = null) {
     let result = this._tickets();
     if (groupName) result = result.filter(t => t.grupo === groupName);
@@ -69,6 +94,7 @@ export class TicketService {
       map(res => this.mapTicket(res.data)),
       tap(newTicket => {
         this._tickets.update(current => [newTicket, ...current]);
+        this.refetchService.requestRefetch();
       })
     );
   }
@@ -80,6 +106,7 @@ export class TicketService {
         this._tickets.update(current => 
           current.map(t => t.id === id ? updated : t)
         );
+        this.refetchService.requestRefetch();
       })
     );
   }
@@ -94,6 +121,7 @@ export class TicketService {
         this._tickets.update(current => 
           current.map(t => t.id === id ? updated : t)
         );
+        this.refetchService.requestRefetch();
       })
     );
   }
@@ -104,6 +132,7 @@ export class TicketService {
       tap(success => {
         if (success) {
           this._tickets.update(current => current.filter(t => t.id !== id));
+          this.refetchService.requestRefetch();
         }
       })
     );
@@ -120,7 +149,8 @@ export class TicketService {
       contenido: content,
       usuario_id: userId
     }).pipe(
-      map(res => res.data)
+      map(res => res.data),
+      tap(() => this.refetchService.requestRefetch())
     );
   }
 }
