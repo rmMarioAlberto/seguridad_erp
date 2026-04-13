@@ -6,7 +6,9 @@ import { createPermissionsHook } from '../hooks/permissions.hook';
 export async function groupsRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authHook);
 
-  app.get('/groups', async (req, reply) => {
+  app.get('/groups', {
+    onRequest: [createPermissionsHook(['global:tickets:view', 'tickets:view'])]
+  }, async (req, reply) => {
     return reply.from(`${config.USER_SERVICE_URL}${req.url}`);
   });
 

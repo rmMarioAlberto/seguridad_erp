@@ -63,3 +63,6 @@ pids
 # Diagnostic reports
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 frontend/.agents/
+cumplimiento_rubrica.md
+.gitignore
+entrega_proyecto.txt

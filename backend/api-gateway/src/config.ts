@@ -9,4 +9,5 @@ export const config = {
   GROUPS_SERVICE_URL: process.env.GROUPS_SERVICE_URL || 'http://localhost:3003',
   RATE_LIMIT_MAX: process.env.RATE_LIMIT_MAX || 100,
   RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS || 60000,
+  INTERNAL_SECRET: process.env.INTERNAL_SECRET || 'erp-internal-super-secret-key-2024',
 };

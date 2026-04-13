@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { GatewayGuard } from './common/guards/gateway.guard';
+import { ConfigService } from '@nestjs/config';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 
@@ -10,6 +12,10 @@ const server = express();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+  const configService = app.get(ConfigService);
+
+  // Seguridad: Defensa en Profundidad
+  app.useGlobalGuards(new GatewayGuard(configService));
 
   // Interceptor global para estandarizar respuestas
   app.useGlobalInterceptors(new TransformInterceptor());

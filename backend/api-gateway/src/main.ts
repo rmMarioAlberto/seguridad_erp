@@ -7,6 +7,7 @@ import jwt from '@fastify/jwt';
 import { config } from './config';
 import { registerRoutes } from './routes';
 import { loggerHook, onResponseHook } from './middleware/logger.middleware';
+import { internalSecretHook } from './middleware/internal-secret.hook';
 import { buildResponse } from './helpers/response.helper';
 
 const app = Fastify({ 
@@ -44,6 +45,7 @@ async function bootstrap() {
 
   // 4. Hooks Globales
   app.addHook('onRequest', loggerHook);
+  app.addHook('onRequest', internalSecretHook);
   app.addHook('onResponse', onResponseHook);
 
   // Estandarización de Esquema JSON Universal (Rúbrica)

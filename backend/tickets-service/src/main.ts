@@ -1,21 +1,40 @@
-import Fastify from 'fastify';
-import { config } from './config';
-import { ticketsRoutes } from './routes/tickets.routes';
-import { estadosRoutes } from './routes/estados.routes';
-import { prioridadesRoutes } from './routes/prioridades.routes';
+import Fastify from "fastify";
+import { config } from "./config";
+import { ticketsRoutes } from "./routes/tickets.routes";
+import { estadosRoutes } from "./routes/estados.routes";
+import { prioridadesRoutes } from "./routes/prioridades.routes";
 
-const app = Fastify({ 
+const app = Fastify({
   logger: {
     transport: {
-      target: 'pino-pretty'
-    }
-  } 
+      target: "pino-pretty",
+    },
+  },
 });
 
 async function bootstrap() {
-  await app.register(ticketsRoutes, { prefix: '/tickets' });
-  await app.register(estadosRoutes, { prefix: '/estados' });
-  await app.register(prioridadesRoutes, { prefix: '/prioridades' });
+  await app.register(ticketsRoutes, { prefix: "/tickets" });
+  await app.register(estadosRoutes, { prefix: "/estados" });
+  await app.register(prioridadesRoutes, { prefix: "/prioridades" });
+
+  // Seguridad: Defensa en Profundidad (Solo permitir peticiones del Gateway)
+  app.addHook("onRequest", async (req, reply) => {
+    // Permitir OPTIONS por CORS si fuera necesario, pero el Gateway ya lo maneja
+    if (req.method === "OPTIONS") return;
+
+    const secret = req.headers["x-internal-secret"];
+    if (secret !== config.INTERNAL_SECRET) {
+      app.log.warn(
+        `[SECURITY] Intento de acceso directo bloqueado desde ${req.ip}`,
+      );
+      return reply.code(401).send({
+        statusCode: 401,
+        intOpCode: "SxTK401",
+        data: null,
+        message: "Acceso directo no permitido. Debe pasar por el API Gateway.",
+      });
+    }
+  });
 
   app.setErrorHandler((error, _req, reply) => {
     const statusCode = error.statusCode ?? 500;
@@ -28,23 +47,30 @@ async function bootstrap() {
   });
 
   // Estandarización de Esquema JSON Universal (Rúbrica)
-  app.addHook('preSerialization', async (request, reply, payload: any) => {
+  app.addHook("preSerialization", async (request, reply, payload: any) => {
     // Si ya viene envuelto (ej: errores), lo dejamos pasar
-    if (payload && typeof payload === 'object' && 'statusCode' in payload && 'intOpCode' in payload) {
+    if (
+      payload &&
+      typeof payload === "object" &&
+      "statusCode" in payload &&
+      "intOpCode" in payload
+    ) {
       return payload;
     }
-    
+
     return {
       statusCode: reply.statusCode,
       intOpCode: `SxTK${reply.statusCode}`,
-      data: payload || null
+      data: payload || null,
     };
   });
 
   try {
-    if (process.env.NODE_ENV !== 'production') {
-      await app.listen({ port: Number(config.PORT), host: '0.0.0.0' });
-      console.log(`🚀 Tickets Service listo en http://localhost:${config.PORT}`);
+    if (process.env.NODE_ENV !== "production") {
+      await app.listen({ port: Number(config.PORT), host: "0.0.0.0" });
+      console.log(
+        `🚀 Tickets Service listo en http://localhost:${config.PORT}`,
+      );
     }
   } catch (err) {
     app.log.error(err);
@@ -57,5 +83,5 @@ bootstrap();
 // Exportar para Vercel
 export default async function handler(req: any, res: any) {
   await app.ready();
-  app.server.emit('request', req, res);
+  app.server.emit("request", req, res);
 }
