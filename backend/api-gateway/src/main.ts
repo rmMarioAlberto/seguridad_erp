@@ -46,6 +46,20 @@ async function bootstrap() {
   app.addHook('onRequest', loggerHook);
   app.addHook('onResponse', onResponseHook);
 
+  // Estandarización de Esquema JSON Universal (Rúbrica)
+  app.addHook('preSerialization', async (request, reply, payload: any) => {
+    // Si ya viene envuelto (ej: errores o respuestas manuales), lo dejamos pasar
+    if (payload && typeof payload === 'object' && 'statusCode' in payload && 'intOpCode' in payload) {
+      return payload;
+    }
+    
+    return {
+      statusCode: reply.statusCode,
+      intOpCode: `SxGW${reply.statusCode}`,
+      data: payload || null
+    };
+  });
+
   // 5. Rutas
   await registerRoutes(app);
 

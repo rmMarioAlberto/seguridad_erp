@@ -27,6 +27,20 @@ async function bootstrap() {
     });
   });
 
+  // Estandarización de Esquema JSON Universal (Rúbrica)
+  app.addHook('preSerialization', async (request, reply, payload: any) => {
+    // Si ya viene envuelto (ej: errores), lo dejamos pasar
+    if (payload && typeof payload === 'object' && 'statusCode' in payload && 'intOpCode' in payload) {
+      return payload;
+    }
+    
+    return {
+      statusCode: reply.statusCode,
+      intOpCode: `SxTK${reply.statusCode}`,
+      data: payload || null
+    };
+  });
+
   try {
     if (process.env.NODE_ENV !== 'production') {
       await app.listen({ port: Number(config.PORT), host: '0.0.0.0' });

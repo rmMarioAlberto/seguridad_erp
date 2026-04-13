@@ -34,8 +34,28 @@ export function createPermissionsHook(requiredPermission: string | string[] | nu
     const globalPerms = user.permisos_globales || [];
     const hasGlobal = requiredPerms.some(p => globalPerms.includes(p));
 
+    // 2. VALIDACIÓN ESPECIAL RÚBRICA: tickets:move requiere ser el asignado
+    // Endpoint: PATCH /tickets/:id/status
+    if (req.method === 'PATCH' && req.url.includes('/status') && req.url.includes('/tickets/')) {
+        const ticketId = req.url.split('/tickets/')[1].split('/status')[0];
+        try {
+            const ticketRes = await fetch(`${config.TICKETS_SERVICE_URL}/tickets/${ticketId}`);
+            if (ticketRes.ok) {
+                const ticketData = await ticketRes.json();
+                const ticket = ticketData.data;
+                
+                // Si el usuario no es SuperAdmin y no tiene el ticket asignado
+                if (!hasGlobal && ticket.asignado_id !== user.sub) {
+                    return reply.code(403).send(buildResponse(403, 'SxGW', null));
+                }
+            }
+        } catch (err) {
+            console.error('Error verificando asignación de ticket en GW:', err);
+        }
+    }
+
     if (hasGlobal) {
-        return; // Usuario tiene permiso a nivel de sistema para cualquiera de las opciones
+        return; // Usuario tiene permiso a nivel de sistema
     }
 
     const groupId =
