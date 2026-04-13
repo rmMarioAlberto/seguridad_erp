@@ -1,0 +1,47 @@
+<div class="grid justify-content-center pt-5">
+
+  <div class="col-12 md:col-8 lg:col-6">
+    <p-card header="Perfil de Usuario">
+      <div class="flex flex-column gap-4">
+        <div class="flex flex-column gap-2">
+          <label for="fullName">Nombre Completo</label>
+          <input pInputText id="fullName" type="text" [disabled]="!editMode" [(ngModel)]="clonedUser.fullName" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label for="username">Nombre de Usuario</label>
+          <input pInputText id="username" type="text" [disabled]="!editMode" [(ngModel)]="clonedUser.username" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label for="email">Correo Electrónico</label>
+          <input pInputText id="email" type="email" [disabled]="!editMode" [(ngModel)]="clonedUser.email" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label for="phone">Teléfono</label>
+          <input pInputText id="phone" type="text" [disabled]="!editMode" [(ngModel)]="clonedUser.phone" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label for="address">Dirección</label>
+          <input pInputText id="address" type="text" [disabled]="!editMode" [(ngModel)]="clonedUser.address" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label for="dob">Fecha de Nacimiento</label>
+          <input pInputText id="dob" type="text" [disabled]="!editMode" [(ngModel)]="clonedUser.dob" />
+        </div>
+        <div class="flex flex-column gap-2">
+          <label for="role">Rol</label>
+          <input pInputText id="role" type="text" [disabled]="true" [(ngModel)]="clonedUser.role" />
+        </div>
+
+         <div class="flex justify-content-between mt-4">
+           <div class="flex gap-2">
+             <p-button *ngIf="!editMode && canEdit" label="Editar" icon="pi pi-user-edit" (onClick)="toggleEdit()"></p-button>
+             <p-button *ngIf="editMode" label="Guardar" icon="pi pi-check" severity="success" (onClick)="saveProfile()"></p-button>
+             <p-button *ngIf="editMode" label="Cancelar" icon="pi pi-times" severity="secondary" (onClick)="toggleEdit()"></p-button>
+           </div>
+           <p-button *ngIf="canDelete" label="Eliminar Cuenta" icon="pi pi-trash" severity="danger" (onClick)="deleteProfile()"></p-button>
+         </div>
+       </div>
+     </p-card>
+  </div>
+</div>
+

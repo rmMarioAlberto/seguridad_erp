@@ -1,0 +1,8 @@
+:host ::ng-deep .custom-table .p-datatable-thead > tr > th {
+    background: var(--surface-card);
+    color: var(--text-color);
+}
+
+:host ::ng-deep .p-tag.uppercase {
+    text-transform: uppercase;
+}

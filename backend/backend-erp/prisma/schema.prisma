@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Permiso {
+  id                   Int                   @id @default(autoincrement())
+  nombre               String                @unique @db.VarChar(100)
+  descripcion          String?
+  creado_en            DateTime?             @default(now()) @db.Timestamptz(6)
+  scope                PermissionScope       @default(GROUP)
+  grupoUsuarioPermisos GrupoUsuarioPermiso[]
+
+  @@map("permisos")
+}
+
+model Usuario {
+  id                   Int                   @id @default(autoincrement())
+  nombre_completo      String                @db.VarChar(255)
+  direccion            String?
+  telefono             String?               @db.VarChar(20)
+  fecha_inicio         DateTime              @db.Date
+  last_login           DateTime?             @db.Timestamptz(6)
+  username             String                @unique @db.VarChar(50)
+  email                String                @unique @db.VarChar(255)
+  password             String                @db.VarChar(255)
+  permisos_globales    Int[]
+  creado_en            DateTime?             @default(now()) @db.Timestamptz(6)
+  comentarios          Comentario[]
+  grupos               GrupoMiembro[]
+  grupoUsuarioPermisos GrupoUsuarioPermiso[]
+  gruposCreados        Grupo[]               @relation("GrupoCreador")
+  historialTickets     HistorialTicket[]
+  ticketsAsignados     Ticket[]              @relation("TicketAsignado")
+  ticketsCreados       Ticket[]              @relation("TicketAutor")
+
+  @@map("usuarios")
+}
+
+model Grupo {
+  id                   Int                   @id @default(autoincrement())
+  nombre               String                @db.VarChar(255)
+  descripcion          String?
+  creador_id           Int
+  creado_en            DateTime?             @default(now()) @db.Timestamptz(6)
+  miembros             GrupoMiembro[]
+  grupoUsuarioPermisos GrupoUsuarioPermiso[]
+  creador              Usuario               @relation("GrupoCreador", fields: [creador_id], references: [id], onDelete: Cascade)
+  tickets              Ticket[]
+
+  @@map("grupos")
+}
+
+model GrupoMiembro {
+  grupo_id    Int
+  usuario_id  Int
+  fecha_unido DateTime? @default(now()) @db.Timestamptz(6)
+  grupo       Grupo     @relation(fields: [grupo_id], references: [id], onDelete: Cascade)
+  usuario     Usuario   @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@id([grupo_id, usuario_id])
+  @@map("grupo_miembros")
+}
+
+model GrupoUsuarioPermiso {
+  grupo_id   Int
+  usuario_id Int
+  permiso_id Int
+  grupo      Grupo   @relation(fields: [grupo_id], references: [id], onDelete: Cascade)
+  permiso    Permiso @relation(fields: [permiso_id], references: [id])
+  usuario    Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@id([grupo_id, usuario_id, permiso_id])
+  @@map("grupo_usuario_permisos")
+}
+
+model Estado {
+  id      Int      @id @default(autoincrement())
+  nombre  String   @db.VarChar(50)
+  color   String?  @db.VarChar(7)
+  tickets Ticket[]
+
+  @@map("estados")
+}
+
+model Prioridad {
+  id      Int      @id @default(autoincrement())
+  nombre  String   @db.VarChar(50)
+  orden   Int?
+  tickets Ticket[]
+
+  @@map("prioridades")
+}
+
+model Ticket {
+  id           Int               @id @default(autoincrement())
+  grupo_id     Int
+  titulo       String            @db.VarChar(500)
+  descripcion  String?
+  autor_id     Int
+  asignado_id  Int?
+  estado_id    Int
+  prioridad_id Int
+  creado_en    DateTime?         @default(now()) @db.Timestamptz(6)
+  fecha_final  DateTime?         @db.Timestamptz(6)
+  comentarios  Comentario[]
+  historial    HistorialTicket[]
+  asignado     Usuario?          @relation("TicketAsignado", fields: [asignado_id], references: [id])
+  autor        Usuario           @relation("TicketAutor", fields: [autor_id], references: [id], onDelete: Cascade)
+  estado       Estado            @relation(fields: [estado_id], references: [id])
+  grupo        Grupo             @relation(fields: [grupo_id], references: [id], onDelete: Cascade)
+  prioridad    Prioridad         @relation(fields: [prioridad_id], references: [id])
+
+  @@map("tickets")
+}
+
+model Comentario {
+  id        Int       @id @default(autoincrement())
+  ticket_id Int
+  autor_id  Int
+  contenido String
+  creado_en DateTime? @default(now()) @db.Timestamptz(6)
+  autor     Usuario   @relation(fields: [autor_id], references: [id], onDelete: Cascade)
+  ticket    Ticket    @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+
+  @@map("comentarios")
+}
+
+model HistorialTicket {
+  id         Int       @id @default(autoincrement())
+  ticket_id  Int
+  usuario_id Int?
+  accion     String    @db.VarChar(100)
+  detalles   Json?
+  creado_en  DateTime? @default(now()) @db.Timestamptz(6)
+  ticket     Ticket    @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  usuario    Usuario?  @relation(fields: [usuario_id], references: [id])
+
+  @@map("historial_tickets")
+}
+
+model Log {
+  id         Int       @id @default(autoincrement())
+  servicio   String    @db.VarChar(50)
+  endpoint   String    @db.VarChar(255)
+  metodo     String    @db.VarChar(10)
+  usuario_id Int?
+  ip         String?   @db.VarChar(45)
+  status     Int
+  duracion   Int?
+  error      String?
+  creado_en  DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@map("logs")
+}
+
+model Metrica {
+  id                   Int       @id @default(autoincrement())
+  endpoint             String    @db.VarChar(255)
+  metodo               String    @db.VarChar(10)
+  total_requests       Int       @default(0)
+  tiempo_respuesta_avg Float?
+  ultima_actualizacion DateTime? @updatedAt
+
+  @@unique([endpoint, metodo])
+  @@map("metricas")
+}
+
+enum PermissionScope {
+  GLOBAL
+  GROUP
+}

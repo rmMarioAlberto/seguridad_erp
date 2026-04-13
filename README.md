@@ -1,59 +1,42 @@
-# Erp
+# ERP Monorepo
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.4.
+Proyecto ERP con arquitectura de microservicios.
 
-## Development server
+## Estructura
 
-To start a local development server, run:
-
-```bash
-ng serve
+```
+erp-monorepo/
+├── frontend/          # Angular 21 → Puerto 4200
+├── backend/
+│   ├── api-gateway/   # Fastify API Gateway → Puerto 3000
+│   ├── backend-erp/   # NestJS ERP Service  → Puerto 3001
+│   └── tickets-service/ # Fastify Tickets   → Puerto 3002
+├── docs/              # Documentación y requerimientos
+└── scripts/
+    └── dev.sh         # Script centralizado de desarrollo
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Inicio Rápido
 
 ```bash
-ng generate component component-name
+# Levantar TODOS los servicios (logs unificados)
+./scripts/dev.sh
+
+# Levantar solo los backends
+./scripts/dev.sh backend
+
+# Levantar servicios individuales
+./scripts/dev.sh gateway
+./scripts/dev.sh erp
+./scripts/dev.sh tickets
+./scripts/dev.sh frontend
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Servicios
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+| Servicio | URL | Framework |
+|---|---|---|
+| API Gateway | http://localhost:3000 | Fastify |
+| Backend ERP | http://localhost:3001 | NestJS |
+| Tickets Service | http://localhost:3002 | Fastify |
+| Frontend | http://localhost:4200 | Angular 21 |

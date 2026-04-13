@@ -1,0 +1,301 @@
+<div class="p-4 surface-card shadow-1 border-round-xl">
+  <!-- Dashboard Header -->
+  <div
+    class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-5 gap-3"
+  >
+    <div>
+      <h2 class="text-3xl font-bold m-0 text-color">
+        Grupo actual: <span class="text-blue-500">{{ currentGroupName() }}</span>
+      </h2>
+      <p class="text-color-secondary m-0">
+        Organiza y supervisa las tareas de tu equipo con fluidez.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2 w-full md:w-auto">
+      @if (!isContextualMode) {
+        <p-select
+          [options]="groupOptions()"
+          [ngModel]="selectedGroup()"
+          (ngModelChange)="onGroupChange($event)"
+          placeholder="Seleccionar Grupo"
+          class="w-full md:w-15rem"
+          [showClear]="true"
+        >
+        </p-select>
+      } @else {
+        <p-button
+          label="Volver a Grupos"
+          icon="pi pi-arrow-left"
+          [text]="true"
+          severity="secondary"
+          routerLink="/group"
+        ></p-button>
+      }
+      <p-button
+        *ngIf="hasPermission('tickets:create')"
+        label="Nuevo Ticket"
+        icon="pi pi-plus"
+        (click)="openCreate()"
+      ></p-button>
+    </div>
+  </div>
+
+  <!-- Stats Cards Row -->
+  <div class="grid mb-5">
+    @for (status of statuses; track status) {
+      <div class="col-12 md:col-3">
+        <div
+          class="surface-card shadow-1 p-3 border-round-xl border-1 surface-border hover:shadow-2 transition-all transition-duration-300"
+        >
+          <div class="flex justify-content-between mb-3">
+            <div>
+              <span
+                class="block text-color-secondary font-medium mb-2 uppercase text-xs tracking-wider"
+                >{{ status }}</span
+              >
+              <div class="text-color font-bold text-2xl">{{ getCount(status) }}</div>
+            </div>
+            <div
+              class="flex align-items-center justify-content-center border-round"
+              [style.width]="'2.5rem'"
+              [style.height]="'2.5rem'"
+              [style.background-color]="getStatusColor(status, true)"
+            >
+              <i [class]="getStatusIcon(status)" [style.color]="getStatusColor(status)"></i>
+            </div>
+          </div>
+          <div class="flex align-items-center">
+            <span class="text-primary font-medium mr-2">{{ getPercentage(status) }}%</span>
+            <span class="text-color-secondary text-xs">del total mostrado</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-3">
+    <p-iconField iconPosition="left" class="w-full md:w-20rem">
+      <p-inputIcon class="pi pi-search"></p-inputIcon>
+      <input
+        pInputText
+        type="text"
+        [ngModel]="globalFilter()"
+        (input)="globalFilter.set($any($event.target).value)"
+        placeholder="Buscar ticket..."
+        class="w-full"
+      />
+    </p-iconField>
+    <div class="flex flex-wrap align-items-center gap-2">
+      <span class="font-medium text-color">Filtros:</span>
+      <p-selectButton
+        [options]="filterOptions"
+        [ngModel]="activeFilter()"
+        (ngModelChange)="activeFilter.set($event)"
+        optionLabel="label"
+        optionValue="value"
+      >
+      </p-selectButton>
+      <div class="border-left-1 border-border h-2rem mx-2 hidden md:block"></div>
+      <span class="font-medium text-color">Vista:</span>
+      <p-selectButton
+        [options]="viewOptions"
+        [ngModel]="selectedView()"
+        (ngModelChange)="selectedView.set($event); saveView()"
+        optionLabel="label"
+        optionValue="value"
+      >
+        <ng-template let-item pTemplate="item">
+          <i [class]="item.icon + ' mr-2'"></i>
+          <span>{{ item.label }}</span>
+        </ng-template>
+      </p-selectButton>
+    </div>
+  </div>
+
+  <!-- List View -->
+  @if (selectedView() === 'list') {
+    <div class="fadein animation-duration-300">
+      <p-table
+        [value]="filteredTickets()"
+        [paginator]="true"
+        [rows]="10"
+        [responsiveLayout]="'scroll'"
+        class="shadow-1 border-round-xl overflow-hidden custom-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="titulo" style="width: 30%">
+              Título <p-sortIcon field="titulo"></p-sortIcon>
+            </th>
+            <th pSortableColumn="estado">Estado <p-sortIcon field="estado"></p-sortIcon></th>
+            <th pSortableColumn="prioridad">
+              Prioridad <p-sortIcon field="prioridad"></p-sortIcon>
+            </th>
+            <th>Asignado a</th>
+            <th pSortableColumn="fechaCreacion">
+              Creado <p-sortIcon field="fechaCreacion"></p-sortIcon>
+            </th>
+            <th style="width: 10%">Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-ticket>
+          <tr class="cursor-pointer" (click)="viewTicket(ticket)">
+            <td class="font-bold text-color text-truncate" style="max-width: 0">
+              {{ ticket.titulo }}
+            </td>
+            <td>
+              <p-tag
+                [value]="ticket.estado"
+                [severity]="getStatusSeverity(ticket.estado)"
+                class="uppercase"
+              ></p-tag>
+            </td>
+            <td>
+              <p-tag
+                [value]="ticket.prioridad"
+                [severity]="getPrioritySeverity(ticket.prioridad)"
+                [rounded]="true"
+              ></p-tag>
+            </td>
+            <td>
+              <div class="flex align-items-center gap-2">
+                <div
+                  class="w-2rem h-2rem border-circle bg-primary-100 flex align-items-center justify-content-center text-primary font-bold text-xs"
+                  *ngIf="ticket.asignadoA"
+                >
+                  {{ ticket.asignadoA.substring(0, 1) }}
+                </div>
+                <span class="text-color text-sm">{{ ticket.asignadoA || 'Sin asignar' }}</span>
+              </div>
+            </td>
+            <td class="text-color-secondary text-sm">
+              {{ ticket.fechaCreacion | date: 'dd/MM/yyyy' }}
+            </td>
+            <td class="text-center" (click)="$event.stopPropagation()">
+              <p-button
+                icon="pi pi-eye"
+                [rounded]="true"
+                [text]="true"
+                severity="secondary"
+                pTooltip="Ver Detalle"
+                (click)="viewTicket(ticket)"
+              ></p-button>
+              <p-button
+                *ngIf="canEditTicket(ticket)"
+                icon="pi pi-pencil"
+                [rounded]="true"
+                [text]="true"
+                severity="primary"
+                pTooltip="Editar"
+                (click)="editTicket(ticket, $event)"
+              ></p-button>
+              <p-button
+                *ngIf="canDeleteTicket(ticket)"
+                icon="pi pi-trash"
+                [rounded]="true"
+                [text]="true"
+                severity="danger"
+                pTooltip="Eliminar"
+                (click)="deleteTicket(ticket, $event)"
+              ></p-button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center p-5 text-color-secondary">
+              No se encontraron tickets con los criterios seleccionados.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+
+  <!-- Kanban View -->
+  @if (selectedView() === 'kanban') {
+    <div class="grid p-1 fadein animation-duration-300" cdkDropListGroup>
+      @for (status of statuses; track status) {
+        <div class="col-12 md:col-3 px-2">
+          <div class="surface-section p-3 border-round-xl h-full border-1 surface-border">
+            <div class="flex justify-content-between align-items-start mb-3">
+              <h3 class="font-bold text-lg m-0 text-color flex align-items-center">
+                <i class="pi pi-circle-fill mr-2" [style.color]="getStatusColor(status)"></i>
+                {{ status }}
+              </h3>
+              <p-tag
+                [value]="getTicketsByStatus(status).length.toString()"
+                severity="secondary"
+                [rounded]="true"
+              ></p-tag>
+            </div>
+
+            <div
+              class="flex flex-column gap-3 min-h-10rem p-2 border-round surface-100"
+              cdkDropList
+              [id]="'group-view-' + status"
+              [cdkDropListData]="getTicketsByStatus(status)"
+              (cdkDropListDropped)="onDrop($event, status)"
+            >
+              @for (ticket of getTicketsByStatus(status); track ticket.id) {
+                <div
+                  (click)="viewTicket(ticket)"
+                  cdkDrag
+                  [cdkDragData]="ticket"
+                  [cdkDragDisabled]="!canMoveTicket(ticket)"
+                  class="p-3 surface-card border-round-lg shadow-1 hover:shadow-3 transform transition-all transition-duration-200 cursor-pointer border-bottom-2"
+                  [class.cursor-not-allowed]="!canMoveTicket(ticket)"
+                  [class.opacity-80]="!canMoveTicket(ticket)"
+                  [style.border-color]="getPriorityColor(ticket.prioridad)"
+                >
+                  <div class="flex justify-content-between align-items-start mb-2">
+                    <small class="text-xs text-color-secondary uppercase font-bold">{{
+                      ticket.grupo
+                    }}</small>
+                    <i class="pi pi-ellipsis-v text-color-secondary opacity-50"></i>
+                  </div>
+
+                  <div class="font-bold text-color mb-2 line-height-3">{{ ticket.titulo }}</div>
+
+                  <div class="flex justify-content-between align-items-center mt-3">
+                    <div class="flex align-items-center gap-2">
+                      <div
+                        class="w-1-5rem h-1-5rem border-circle surface-section flex align-items-center justify-content-center text-color text-xs font-bold border-1 surface-border"
+                        *ngIf="ticket.asignadoA"
+                      >
+                        {{ ticket.asignadoA.substring(0, 1) }}
+                      </div>
+                      <span class="text-xs text-color-secondary font-medium">{{
+                        ticket.asignadoA || 'Sin asignar'
+                      }}</span>
+                    </div>
+                    <div class="flex gap-2">
+                      <small class="text-color-secondary text-xs font-semibold">{{
+                        ticket.fechaCreacion | date: 'MMM d'
+                      }}</small>
+                    </div>
+                  </div>
+
+                  <!-- Drag Placeholder -->
+                  <div
+                    *cdkDragPlaceholder
+                    class="surface-hover border-round-xl border-2 border-dashed border-primary-500 opacity-50 p-4 mb-3"
+                  ></div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modals -->
+<app-ticket-detail
+  [(visible)]="displayDetail"
+  [ticket]="selectedTicket"
+  (ticketDeleted)="refreshData()"
+  (ticketUpdated)="refreshData()"
+></app-ticket-detail>
+<app-ticket-create #ticketCreate (ticketCreated)="refreshData()"></app-ticket-create>

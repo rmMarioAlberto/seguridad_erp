@@ -1,0 +1,172 @@
+<div class="p-4 surface-card shadow-1 border-round-xl">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-3xl font-bold m-0 text-color">Gestión de Usuarios</h2>
+    @if (canCreate()) {
+        <p-button label="Nuevo Usuario" icon="pi pi-user-plus" (click)="openNew()"></p-button>
+    }
+  </div>
+
+  <p-table [value]="users()" [rows]="10" [paginator]="true" responsiveLayout="scroll">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Nombre</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th style="width: 15rem">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-user>
+      <tr>
+        <td>{{ user.nombre_completo }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>
+          @if (canEdit()) {
+            <p-button
+                icon="pi pi-pencil"
+                [rounded]="true"
+                [text]="true"
+                severity="info"
+                (click)="editUser(user)"
+            ></p-button>
+          }
+          @if (canDelete()) {
+            <p-button
+                icon="pi pi-trash"
+                [rounded]="true"
+                [text]="true"
+                severity="danger"
+                (click)="deleteUser(user)"
+            ></p-button>
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <p-dialog
+    [(visible)]="userDialog"
+    [header]="editingUser?.id ? 'Editar Datos y Permisos' : 'Crear Nuevo Usuario'"
+    [modal]="true"
+    styleClass="p-fluid"
+    [style]="{ width: '850px' }"
+    appendTo="body"
+  >
+    <ng-template pTemplate="content">
+      <div class="grid mt-2">
+        <!-- Columna Izquierda: Datos del Usuario -->
+        <div class="col-12 md:col-6 border-right-1 surface-border pr-4">
+          <h3 class="mt-0 mb-4 text-primary font-bold">
+            <i class="pi pi-user mr-2"></i>Información del Perfil
+          </h3>
+          <form [formGroup]="userForm" class="flex flex-column">
+            <div class="field flex flex-column gap-2 mb-3">
+              <label for="nombre_completo" class="font-bold">Nombre Completo</label>
+              <input type="text" pInputText id="nombre_completo" formControlName="nombre_completo" autofocus class="w-full" />
+              <small class="p-error" *ngIf="userForm.get('nombre_completo')?.invalid && userForm.get('nombre_completo')?.touched">Es obligatorio (mín 3 caracteres).</small>
+            </div>
+            
+            <div class="field flex flex-column gap-2 mb-3">
+                <label for="username" class="font-bold">Username</label>
+                <input type="text" pInputText id="username" formControlName="username" class="w-full" />
+                <small class="p-error" *ngIf="userForm.get('username')?.invalid && userForm.get('username')?.touched">Es obligatorio.</small>
+            </div>
+
+            <div class="field flex flex-column gap-2 mb-3">
+              <label for="email" class="font-bold">Email</label>
+              <input type="email" pInputText id="email" formControlName="email" class="w-full" />
+              <small class="p-error" *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched">Email inválido.</small>
+            </div>
+
+            <div class="grid">
+              <div class="col-12 md:col-6">
+                <div class="field flex flex-column gap-2 mb-3">
+                  <label for="telefono" class="font-bold">Teléfono</label>
+                  <input type="text" pInputText id="telefono" formControlName="telefono" class="w-full" placeholder="Solo números" />
+                  <small class="p-error" *ngIf="userForm.get('telefono')?.invalid && userForm.get('telefono')?.touched">Solo números.</small>
+                </div>
+              </div>
+              <div class="col-12 md:col-6">
+                <div class="field flex flex-column gap-2 mb-3">
+                  <label for="fecha_inicio" class="font-bold">F. Nacimiento</label>
+                  <p-datepicker id="fecha_inicio" formControlName="fecha_inicio" [showIcon]="true" appendTo="body" class="w-full"></p-datepicker>
+                  <small class="p-error" *ngIf="userForm.get('fecha_inicio')?.hasError('underage')">Debe ser mayor de 18 años.</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="field flex flex-column gap-2 mb-3">
+              <label for="direccion" class="font-bold">Dirección</label>
+              <input type="text" pInputText id="direccion" formControlName="direccion" class="w-full" />
+            </div>
+            
+            <div class="mt-2 p-2 surface-100 border-round">
+              <small class="text-600">
+                <i class="pi pi-info-circle mr-1"></i>
+                Nuevos usuarios: Contraseña por defecto <b>bebeto123:V</b>
+              </small>
+            </div>
+          </form>
+        </div>
+
+        <!-- Columna Derecha: Permisos Globales Dinámicos -->
+        <div class="col-12 md:col-6 pl-4">
+          <div class="flex justify-content-between align-items-center mb-4">
+            <h3 class="m-0 text-primary font-bold">
+              <i class="pi pi-shield mr-2"></i>Permisos Globales
+            </h3>
+            <p-tag
+              [value]="userForm.get('permisos_globales')?.value.length + ' Seleccionados'"
+              severity="warn"
+            ></p-tag>
+          </div>
+
+          <div class="border-round surface-border border-1 overflow-auto" style="max-height: 400px">
+            <div
+              *ngFor="let perm of availablePermissions"
+              class="flex align-items-center p-3 transition-duration-200 cursor-pointer border-bottom-1 surface-border"
+              [ngClass]="{
+                'bg-blue-900 border-left-3 border-blue-400 shadow-2': isPermissionSelected(perm.id),
+                'hover:surface-hover': !isPermissionSelected(perm.id)
+              }"
+              (click)="togglePermission(perm.id)"
+            >
+              <p-checkbox
+                [binary]="true"
+                [ngModel]="isPermissionSelected(perm.id)"
+                class="mr-3"
+              ></p-checkbox>
+              <div class="flex flex-column flex-grow-1">
+                <div class="flex justify-content-between align-items-center">
+                  <span class="font-bold text-lg" [ngClass]="isPermissionSelected(perm.id) ? 'text-blue-100' : 'text-color'">
+                    {{ perm.nombre }}
+                  </span>
+                  <i *ngIf="isPermissionSelected(perm.id)" class="pi pi-check-circle text-blue-300"></i>
+                </div>
+                <small [ngClass]="isPermissionSelected(perm.id) ? 'text-blue-200' : 'text-500'" class="line-height-2">
+                  {{ perm.descripcion || 'Sin descripción disponible' }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <small class="block mt-2 text-gray-500 italic"
+            >Los permisos seleccionados subirán automáticamente al inicio de la lista.</small
+          >
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <p-button label="Cancelar" icon="pi pi-times" [text]="true" (click)="hideDialog()"></p-button>
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        (click)="saveUser()"
+        [disabled]="userForm.invalid || (editingUser?.id ? !canEdit() : !canCreate())"
+      ></p-button>
+    </ng-template>
+  </p-dialog>
+</div>
+
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+<p-toast></p-toast>

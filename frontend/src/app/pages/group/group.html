@@ -1,0 +1,292 @@
+<div class="card p-4">
+  <!-- Statistic Card -->
+  <div class="grid mb-4">
+    <div class="col-12 md:col-4">
+      <p-card styleClass="surface-card shadow-2 border-round">
+        <div class="flex justify-content-between mb-3">
+          <div>
+            <span class="block text-500 font-medium mb-3">Total de Grupos</span>
+            <div class="text-900 font-bold text-4xl">{{ groups() ? groups().length : 0 }}</div>
+          </div>
+          <div
+            class="flex align-items-center justify-content-center bg-blue-100 border-round"
+            style="width: 2.5rem; height: 2.5rem"
+          >
+            <i class="pi pi-users text-blue-500 text-xl"></i>
+          </div>
+        </div>
+        <span class="text-green-500 font-medium">+{{ groups().length }} </span>
+        <span class="text-500">grupos activos</span>
+      </p-card>
+    </div>
+  </div>
+
+  <p-toolbar styleClass="mb-4 gap-2" *ngIf="canCreate()">
+    <ng-template pTemplate="left">
+      <p-button
+        label="Nuevo"
+        icon="pi pi-plus"
+        class="p-button-success mr-2"
+        (onClick)="openNew()"
+      ></p-button>
+    </ng-template>
+  </p-toolbar>
+
+  <p-table
+    #dt
+    [value]="groups()"
+    [rows]="10"
+    [paginator]="true"
+    [globalFilterFields]="['nombre', 'autor', 'nivel']"
+    [tableStyle]="{ 'min-width': '75rem' }"
+    [rowHover]="true"
+    dataKey="id"
+    currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} entradas"
+    [showCurrentPageReport]="true"
+  >
+    <ng-template pTemplate="caption">
+      <div class="flex align-items-center justify-content-between">
+        <h5 class="m-0">Administrar Grupos</h5>
+        <p-iconField iconPosition="left">
+          <p-inputIcon class="pi pi-search"></p-inputIcon>
+          <input
+            pInputText
+            type="text"
+            (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+            placeholder="Buscar..."
+          />
+        </p-iconField>
+      </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+      <tr>
+        <th scope="col" pSortableColumn="nombre" style="min-width: 15rem">
+          Nombre <p-sortIcon field="nombre"></p-sortIcon>
+        </th>
+        <th scope="col" pSortableColumn="autor">Autor <p-sortIcon field="autor"></p-sortIcon></th>
+        <th scope="col" pSortableColumn="integrantes">
+          Integrantes <p-sortIcon field="integrantes"></p-sortIcon>
+        </th>
+        <th scope="col" pSortableColumn="tickets">
+          Tickets <p-sortIcon field="tickets"></p-sortIcon>
+        </th>
+        <th scope="col">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-group>
+      <tr>
+        <td>{{ group.nombre }}</td>
+        <td>{{ group.autor }}</td>
+        <td>
+          <span class="font-bold">{{ group.integrantes }}</span>
+          <p-button
+            *ngIf="canManageMembers()"
+            icon="pi pi-users"
+            [rounded]="true"
+            severity="secondary"
+            size="small"
+            class="ml-2"
+            [text]="true"
+            pTooltip="Gestionar miembros"
+            (onClick)="openMembersDialog(group)"
+          ></p-button>
+        </td>
+        <td>{{ group.tickets }}</td>
+        <td>
+          <p-button
+            *ngIf="canViewGroup(group)"
+            icon="pi pi-info-circle"
+            [rounded]="true"
+            severity="info"
+            class="mr-2"
+            (onClick)="viewGroupDashboard(group)"
+          ></p-button>
+          <p-button
+            *ngIf="canEdit()"
+            icon="pi pi-pencil"
+            [rounded]="true"
+            severity="success"
+            class="mr-2"
+            (onClick)="editGroup(group)"
+          ></p-button>
+          <p-button
+            *ngIf="canDelete()"
+            icon="pi pi-trash"
+            [rounded]="true"
+            severity="warn"
+            (onClick)="deleteGroup(group)"
+          ></p-button>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="summary">
+      <div class="flex align-items-center justify-content-between">
+        En total hay {{ groups() ? groups().length : 0 }} grupos.
+      </div>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Create/Edit Group Dialog -->
+<p-dialog
+  [(visible)]="groupDialog"
+  [style]="{ width: '450px' }"
+  header="Detalles del Grupo"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="field flex flex-column gap-2 mb-4">
+      <label for="nombre" class="font-bold">Nombre del Grupo</label>
+      <input
+        type="text"
+        pInputText
+        id="nombre"
+        [(ngModel)]="group.nombre"
+        required
+        autofocus
+        placeholder="Ingrese el nombre del grupo"
+        class="w-full"
+      />
+      <small class="p-error" *ngIf="submitted && !group.nombre">El nombre es requerido.</small>
+    </div>
+
+    <div class="field flex flex-column gap-2 mb-4">
+      <label for="descripcion" class="font-bold">Descripción</label>
+      <textarea
+        id="descripcion"
+        pInputTextarea
+        [(ngModel)]="group.descripcion"
+        required
+        rows="3"
+        placeholder="Breve descripción del propósito del grupo"
+        class="w-full"
+      ></textarea>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-content-end gap-2">
+      <p-button
+        label="Cancelar"
+        icon="pi pi-times"
+        [text]="true"
+        severity="secondary"
+        (onClick)="hideDialog()"
+      ></p-button>
+      <p-button
+        label="Guardar Grupo"
+        icon="pi pi-check"
+        (onClick)="saveGroup()"
+        [disabled]="group.id ? !canEdit() : !canCreate()"
+      ></p-button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Members Management Dialog -->
+<p-dialog
+  [(visible)]="membersDialog"
+  [style]="{ width: '750px' }"
+  [header]="'Miembros de: ' + (selectedGroupForMembers?.nombre || '')"
+  [modal]="true"
+  appendTo="body"
+>
+  <ng-template pTemplate="content">
+    <!-- Add member row -->
+    @if (canManageMembers()) {
+      <div class="flex gap-2 mb-4 align-items-end">
+        <div class="flex-1">
+          <label class="block font-bold mb-2">Agregar usuario al grupo</label>
+          <p-select
+            [options]="availableUsers()"
+            [(ngModel)]="selectedUserToAdd"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Seleccionar usuario..."
+            [filter]="true"
+            filterPlaceholder="Buscar..."
+            class="w-full"
+            appendTo="body"
+          >
+          </p-select>
+        </div>
+        <p-button
+          label="Agregar"
+          icon="pi pi-user-plus"
+          [disabled]="!selectedUserToAdd"
+          (onClick)="addMember()"
+        ></p-button>
+      </div>
+    }
+
+    <p class="font-bold mb-2 text-color-secondary uppercase text-xs flex justify-content-between">
+      <span>Miembros actuales ({{ currentMembers().length }})</span>
+    </p>
+
+    <!-- Members list -->
+    <p-table [value]="currentMembers()" [rows]="10" [paginator]="currentMembers().length > 10">
+      <ng-template pTemplate="header">
+        <tr>
+          <th scope="col" style="width: 30%">Nombre</th>
+          <th scope="col" style="width: 50%">Permisos Específicos</th>
+          <th scope="col" style="width: 20%">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-member>
+        <tr>
+          <td>
+            <div class="font-bold">{{ member.nombre_completo }}</div>
+            <div class="text-color-secondary text-sm">{{ member.username }}</div>
+          </td>
+          <td>
+            <div class="flex flex-column gap-1">
+              <p-multiSelect
+                [options]="availablePermissions()"
+                [(ngModel)]="member.permisos"
+                (onChange)="updatePermissions(member, $event.value)"
+                optionLabel="label"
+                optionValue="value"
+                placeholder="Sin permisos de grupo"
+                display="chip"
+                [filter]="false"
+                class="w-full"
+                appendTo="body"
+                styleClass="permission-select"
+                [disabled]="!canManageMembers()"
+              >
+              </p-multiSelect>
+              <small class="text-xs text-500 px-2" *ngIf="availablePermissions().length === 0">
+                <i class="pi pi-info-circle mr-1"></i> No hay permisos de alcance GROUP registrados.
+              </small>
+            </div>
+          </td>
+          <td>
+            @if (canManageMembers()) {
+              <p-button
+                icon="pi pi-user-minus"
+                [rounded]="true"
+                severity="danger"
+                size="small"
+                [text]="true"
+                pTooltip="Quitar del grupo"
+                (onClick)="removeMember(member)"
+              >
+              </p-button>
+            }
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="3" class="text-center text-color-secondary italic p-4">
+            No hay miembros en este grupo.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+<p-toast></p-toast>
